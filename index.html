@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulado Interativo de POO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Stone & Sage" - A calm, neutral palette using shades of gray (stone) and a muted green (sage) for accents, creating a focused and harmonious learning environment. -->
+    <!-- Application Structure Plan: The SPA is structured around two main sections, one for each "Prova". A top navigation bar allows users to switch between them. Each test section is further divided into: 1) An interactive multiple-choice quiz, where users select answers and get immediate feedback. 2) A results section with a Chart.js donut chart summarizing performance. 3) A section for discursive/coding questions, where answers are initially hidden and can be revealed by the user. This structure transforms passive text into an active learning experience, encouraging users to test their knowledge before seeing the answers, which is more effective for studying than simply reading the original document. -->
+    <!-- Visualization & Content Choices: Report Info: Multiple-choice questions and answers. -> Goal: Test user knowledge interactively. -> Viz/Presentation Method: HTML forms (radio buttons). -> Interaction: User selects an option, JS validates it, provides immediate visual feedback (green/red), and displays the detailed explanation for every option. Justification: This active engagement is superior for learning compared to passive reading. Library/Method: Vanilla JS. | Report Info: User performance on quiz. -> Goal: Provide a quick summary of results. -> Viz/Presentation Method: Donut Chart. -> Interaction: The chart dynamically updates based on the user's answers. Justification: A visual summary is faster to interpret than raw numbers. Library/Method: Chart.js/Canvas. | Report Info: Discursive/coding questions and their solutions. -> Goal: Encourage users to think before seeing the answer. -> Viz/Presentation Method: HTML with a 'reveal' button. -> Interaction: The solution is hidden by default and shown on button click. Justification: This simulates a real test environment and promotes critical thinking. Library/Method: Vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .correct-answer {
+            background-color: #d1fae5; /* Green-100 */
+            border-left: 4px solid #10b981; /* Green-500 */
+        }
+        .wrong-answer {
+            background-color: #fee2e2; /* Red-100 */
+            border-left: 4px solid #ef4444; /* Red-500 */
+        }
+        .explanation {
+            background-color: #f3f4f6; /* Gray-100 */
+            border-left: 4px solid #6b7280; /* Gray-500 */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+        }
+        .code-block {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: monospace;
+        }
+        .nav-button-active {
+            background-color: #267D71;
+            color: #ffffff;
+        }
+        .nav-button-inactive {
+            background-color: #f3f4f6;
+            color: #374151;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .nav-button-inactive:hover {
+            background-color: #e5e7eb;
+        }
+        .reveal-button {
+            background-color: #374151;
+            color: #ffffff;
+            transition: background-color 0.3s;
+        }
+        .reveal-button:hover {
+            background-color: #4b5563;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            margin: 2rem auto;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div id="app" class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
+
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-[#267D71]">Simulado Interativo de POO</h1>
+            <p class="mt-2 text-lg text-stone-600">Teste seus conhecimentos em Programação Orientada a Objetos.</p>
+        </header>
+
+        <nav class="flex justify-center mb-8 bg-stone-100 p-2 rounded-lg shadow-sm">
+            <button id="nav-prova1" class="nav-button-active font-semibold py-2 px-6 rounded-md">Prova 1</button>
+            <button id="nav-prova2" class="nav-button-inactive font-semibold py-2 px-6 rounded-md ml-4">Prova 2</button>
+        </nav>
+
+        <main id="content">
+            <!-- Provas serão carregadas aqui -->
+        </main>
+
+    </div>
+
+    <script>
+        const appData = {
+            prova1: {
+                mcq: [
+                    {
+                        question: "1. (UFSM) Considerando a herança em Java, assinale a alternativa correta.",
+                        options: [
+                            { text: "Uma classe pode herdar de múltiplas classes em Java.", explanation: "<b>Incorreta.</b> Java não suporta herança múltipla de classes para evitar problemas de complexidade, como o 'problema do diamante'. Uma classe só pode estender uma outra classe." },
+                            { text: "Todos os atributos e métodos de uma classe pai são automaticamente acessíveis na classe filha.", explanation: "<b>Incorreta.</b> Apenas os membros `public` e `protected` são diretamente acessíveis. Membros `private` da classe pai não são acessíveis na classe filha." },
+                            { text: "A palavra-chave \"extends\" é usada para implementar a composição entre classes.", explanation: "<b>Incorreta.</b> A palavra-chave `extends` é usada para herança ('é um'). Composição ('tem um') é implementada tendo um atributo que é uma instância de outra classe." },
+                            { text: "A herança em Java é uma forma de reutilização de código, mas pode levar à criação de acoplamento forte entre as classes.", explanation: "<b>Correta.</b> A herança permite que uma classe (filha) reutilize os atributos e métodos de outra classe (pai). No entanto, isso cria uma dependência direta (acoplamento forte), pois qualquer mudança na classe pai pode afetar todas as suas classes filhas." },
+                            { text: "Em uma relação de duas classes, em que uma classe filha foi herdada de uma classe pai, a classe filha pode substituir o método privado da classe pai.", explanation: "<b>Incorreta.</b> Métodos privados não são herdados e, portanto, não podem ser substituídos (sobrescritos) pela classe filha." }
+                        ],
+                        answer: 3,
+                    },
+                    {
+                        question: "2. (UFAPE) O princípio de esconder os detalhes de implementação internos de um objeto e fornecer uma interface clara e consistente para interagir com ele é conhecido como:",
+                        options: [
+                            { text: "Abstração", explanation: "<b>Incorreta.</b> Abstração é focar nos aspectos essenciais de um objeto, ignorando detalhes irrelevantes para o contexto." },
+                            { text: "Herança", explanation: "<b>Incorreta.</b> Herança é a capacidade de uma classe herdar características de outra." },
+                            { text: "Polimorfismo", explanation: "<b>Incorreta.</b> Polimorfismo é a capacidade de um objeto assumir múltiplas formas, geralmente através de herança e interfaces." },
+                            { text: "Encapsulamento", explanation: "<b>Correta.</b> Encapsulamento é exatamente o princípio de agrupar dados (atributos) e os métodos que os manipulam dentro de uma unidade (objeto), escondendo os detalhes internos e controlando o acesso." },
+                            { text: "Classe", explanation: "<b>Incorreta.</b> Classe é o molde ou modelo para a criação de objetos, não o princípio em si." }
+                        ],
+                        answer: 3,
+                    },
+                    {
+                        question: "3. (IBADE) Qual estrutura de dados em Java é mais adequada para armazenar elementos sem duplicação, permitindo acesso eficiente e verificação de existência?",
+                        options: [
+                            { text: "HashSet", explanation: "<b>Correta.</b> `HashSet` é projetado para não permitir elementos duplicados e usa uma tabela de hash para armazenamento, o que torna as operações de adicionar e verificar a existência muito rápidas (tempo constante O(1), em média)." },
+                            { text: "ArrayList", explanation: "<b>Incorreta.</b> `ArrayList` permite duplicatas e a verificação de existência é mais lenta (O(n)), pois precisa percorrer a lista." },
+                            { text: "LinkedList", explanation: "<b>Incorreta.</b> `LinkedList` também permite duplicatas e a verificação de existência é lenta (O(n))." },
+                            { text: "TreeSet", explanation: "<b>Incorreta.</b> Embora não permita duplicatas, `TreeSet` mantém os elementos ordenados, o que torna as operações um pouco mais lentas (O(log n)) que no `HashSet`." },
+                            { text: "HashMap", explanation: "<b>Incorreta.</b> `HashMap` armazena pares chave-valor, sendo inadequado para armazenar apenas elementos únicos de forma direta." }
+                        ],
+                        answer: 0,
+                    },
+                    {
+                        question: "4. Qual das alternativas apresenta uma diferença válida entre uma classe abstrata e uma interface em Java?",
+                        options: [
+                            { text: "Classes abstratas permitem a declaração de atributos, enquanto as interfaces permitem apenas a declaração de métodos abstratos.", explanation: "<b>Incorreta.</b> Interfaces também podem ter atributos (que são implicitamente `public static final`)." },
+                            { text: "Interfaces podem ter métodos com implementações concretas, enquanto classes abstratas não podem.", explanation: "<b>Incorreta.</b> Desde o Java 8, interfaces podem ter métodos `default` e `static` com implementação, e classes abstratas sempre puderam ter métodos concretos." },
+                            { text: "Classes abstratas podem ser instanciadas, enquanto interfaces não podem.", explanation: "<b>Incorreta.</b> Nenhuma das duas pode ser instanciada diretamente." },
+                            { text: "Interfaces só podem estender uma interface, enquanto classes abstratas podem estender várias outras classes.", explanation: "<b>Incorreta.</b> O oposto é verdadeiro. Uma classe só pode estender uma classe (abstrata ou não), enquanto uma interface pode estender múltiplas outras interfaces." },
+                            { text: "Classes abstratas podem ter construtores, enquanto interfaces não podem.", explanation: "<b>Correta.</b> Classes abstratas possuem construtores (que são chamados pelas subclasses com `super()`). Interfaces não são classes e não podem ser instanciadas, logo, não possuem construtores." }
+                        ],
+                        answer: 4,
+                    },
+                    {
+                        question: "5. (FUNTEF) Em programação orientada a objetos, é correto afirmar que o principal conceito de polimorfismo é:",
+                        options: [
+                            { text: "O princípio pelo qual permite simplificar e modelar objetos complexos.", explanation: "<b>Incorreta.</b> Esta é a definição de Abstração." },
+                            { text: "O princípio que expande a capacidade de criar uma nova classe baseada em uma classe já existente.", explanation: "<b>Incorreta.</b> Esta é a definição de Herança." },
+                            { text: "O princípio que garante que dados internos de um objeto sejam manipulados diretamente por outras partes.", explanation: "<b>Incorreta.</b> Esta é uma descrição incorreta de Encapsulamento (que na verdade evita a manipulação direta)." },
+                            { text: "O princípio pelo qual duas ou mais classes derivadas de uma mesma superclasse podem invocar métodos que têm a mesma assinatura, mas com comportamentos distintos.", explanation: "<b>Correta.</b> Polimorfismo (muitas formas) refere-se à habilidade de chamar o mesmo método em objetos de diferentes classes e obter comportamentos específicos de cada classe." },
+                            { text: "O princípio utilizado para evitar reutilização de código.", explanation: "<b>Incorreta.</b> Esta afirmação é contraditória; POO, em geral, promove a reutilização de código." }
+                        ],
+                        answer: 3,
+                    }
+                ],
+                discursive: [
+                    {
+                        question: "6. Explique as principais diferenças entre classes abstratas e interfaces em Java.",
+                        answer: `<ul class="list-disc list-inside space-y-2"><li><b>Propósito:</b> Uma classe abstrata é usada para criar uma base comum e compartilhar código (relação "é um"). Uma interface é usada para definir um "contrato" de comportamento que classes podem implementar (relação "é capaz de").</li><li><b>Atributos:</b> Classes abstratas podem ter atributos de instância e estáticos. Interfaces só podem ter constantes (public static final).</li><li><b>Construtores:</b> Classes abstratas podem ter construtores. Interfaces não podem.</li><li><b>Herança:</b> Uma classe pode estender apenas uma classe abstrata, mas pode implementar múltiplas interfaces.</li></ul>`
+                    },
+                    {
+                        question: "7. Modele as classes para um sistema de pedágio (Veiculo, Moto, Carro, Caminhao) utilizando uma classe abstrata.",
+                        answer: `<p class="mb-2">A solução envolve criar uma classe abstrata <code>Veiculo</code> com um método abstrato <code>calcularPedagio()</code>, que é então implementado de forma específica por cada subclasse.</p><div class="code-block"><pre><code>// Arquivo: Veiculo.java\npublic abstract class Veiculo {\n   protected String placa;\n\n   public Veiculo(String placa) {\n       this.placa = placa;\n   }\n\n   public abstract double calcularPedagio();\n}\n\n// Demais classes (Moto, Carro, Caminhao) herdam de Veiculo...</code></pre></div>`
+                    },
+                    {
+                        question: "8. Dado o seguinte código Java, corrija o código para que não sejam produzidos erros de compilação.",
+                        answer: `<p class="mb-2">O erro principal está na tentativa de acessar atributos privados da superclasse diretamente. A correção é feita chamando o construtor da superclasse com <code>super(numero, titular)</code> e implementando o método <code>calculaImposto()</code> exigido pela interface <code>Taxavel</code>.</p><div class="code-block"><pre><code>// Arquivo: ContaCorrente.java (Corrigido)\npublic class ContaCorrente extends Conta implements Taxavel {\n   // ...\n   public ContaCorrente(int numero, String titular, float taxaoperacao) {\n       super(numero, titular); \n       this.taxaoperacao = taxaoperacao;\n   }\n\n   @Override\n   public float calculaImposto() {\n       // ...\n   }\n}</code></pre></div>`
+                    }
+                ]
+            },
+            prova2: {
+                 mcq: [
+                    {
+                        question: "1. (FACTO) [...] assinale a afirmativa CORRETA.",
+                        options: [
+                            { text: "Mesmo que uma classe não seja especificada como abstrata, é possível especificar métodos abstratos para ela.", explanation: "<b>Incorreta.</b> Uma classe concreta, por definição, não pode ter métodos abstratos. Somente classes abstratas podem." },
+                            { text: "O grau de acoplamento determina a firmeza com que as classes estão conectadas, garantindo segurança e facilidade de manutenção.", explanation: "<b>Incorreta.</b> Acoplamento forte (firmeza) torna a manutenção mais difícil, não mais fácil. O ideal é acoplamento fraco." },
+                            { text: "O encapsulamento adequado permite aumentar a coesão e elevar seu acoplamento.", explanation: "<b>Incorreta.</b> O encapsulamento adequado ajuda a diminuir o acoplamento, e não a elevá-lo." },
+                            { text: "Um bom projeto orientado a objetos deve ter um elevado grau de coesão e um acoplamento fraco.", explanation: "<b>Correta.</b> Este é um princípio fundamental do design de software. Coesão alta significa que os membros de uma classe estão fortemente relacionados. Acoplamento fraco significa que as classes são independentes." },
+                            { text: "Interfaces são semelhantes a classes abstratas, porém podem ser instanciadas.", explanation: "<b>Incorreta.</b> Interfaces, assim como classes abstratas, não podem ser instanciadas diretamente." }
+                        ],
+                        answer: 3,
+                    },
+                    {
+                        question: "2. (CESPE) Assinale a opção correta a respeito de conceitos pertinentes à orientação a objetos.",
+                        options: [
+                            { text: "Herança representa a capacidade de uma única referência invocar métodos diferentes.", explanation: "<b>Incorreta.</b> A descrição refere-se a Polimorfismo." },
+                            { text: "Encapsulamento identifica o princípio de ocultar os detalhes internos de uma classe e expor apenas o que é necessário.", explanation: "<b>Correta.</b> Esta é a definição precisa de encapsulamento. Ele protege o estado interno de um objeto e permite o acesso controlado." },
+                            { text: "Polimorfismo é o mecanismo pelo qual uma classe (subclasse) herda características e comportamentos de outra classe (superclasse).", explanation: "<b>Incorreta.</b> A descrição refere-se a Herança." },
+                            { text: "Composição relaciona classes em uma hierarquia 'é-um'.", explanation: "<b>Incorreta.</b> A descrição refere-se a Herança ('é-um'). Composição é um relacionamento 'tem-um'." },
+                            { text: "Abstração é o mecanismo de ocultar o código fonte.", explanation: "<b>Incorreta.</b> A descrição é vaga. Abstração é focar no que o objeto faz, e não em como ele faz." }
+                        ],
+                        answer: 1,
+                    },
+                    {
+                        question: "3. (OBJETIVA) [...] qual das seguintes alternativas melhor descreve o conceito de herança?",
+                         options: [
+                            { text: "Herança refere-se à prática de duplicar código.", explanation: "<b>Incorreta.</b> Herança evita a duplicação de código, não a promove." },
+                            { text: "Herança é a restrição da visibilidade de certos métodos e atributos.", explanation: "<b>Incorreta.</b> A restrição da visibilidade é feita pelos modificadores de acesso, um conceito relacionado ao Encapsulamento." },
+                            { text: "Herança consiste na criação de instâncias de uma classe em outra.", explanation: "<b>Incorreta.</b> A criação de instâncias de uma classe em outra é Composição, não Herança." },
+                            { text: "Herança é a capacidade de uma classe adquirir propriedades e comportamentos de outra, permitindo a criação de uma hierarquia de classes e a reutilização de código.", explanation: "<b>Correta.</b> Esta é a definição padrão de herança, destacando seus dois principais benefícios: criar uma hierarquia e reutilizar código." }
+                        ],
+                        answer: 3,
+                    },
+                    {
+                        question: "4. [...] Assinale a classe da API de collections mais adequada para resolver o problema [armazenar milhares de registros sem duplicação].",
+                        options: [
+                            { text: "Vector", explanation: "<b>Incorreta.</b> `Vector` é uma classe legada, sincronizada e que permite duplicatas." },
+                            { text: "TreeMap", explanation: "<b>Incorreta.</b> `TreeMap` é uma estrutura de mapa (chave-valor) e não de conjunto simples." },
+                            { text: "Hashtable", explanation: "<b>Incorreta.</b> `Hashtable` também é uma estrutura de mapa (chave-valor)." },
+                            { text: "LinkedList", explanation: "<b>Incorreta.</b> `LinkedList` permite elementos duplicados." },
+                            { text: "HashSet", explanation: "<b>Correta.</b> `HashSet` é a escolha ideal porque, por definição, não permite elementos duplicados e garante alta performance para adicionar e verificar a existência." }
+                        ],
+                        answer: 4,
+                    },
+                    {
+                        question: "5. (NUCEPE) Os modificadores de acesso que preenchem respectivamente as lacunas (_ visível em todas as classes; _ visível só na classe; _ visível na classe e subclasses) são:",
+                        options: [
+                            { text: "public | private | package", explanation: "<b>Incorreta.</b> `package` (ou default) não é visível em subclasses de outros pacotes." },
+                            { text: "package | private | protected", explanation: "<b>Incorreta.</b> A ordem e as definições não correspondem." },
+                            { text: "protected | private | public", explanation: "<b>Incorreta.</b> A ordem e as definições não correspondem." },
+                            { text: "package | protected | public", explanation: "<b>Incorreta.</b> A ordem e as definições não correspondem." },
+                            { text: "public | private | protected", explanation: "<b>Correta.</b> `public`: visível em qualquer lugar. `private`: visível apenas na classe. `protected`: visível na classe, no pacote e em subclasses." }
+                        ],
+                        answer: 4,
+                    }
+                ],
+                discursive: [
+                    {
+                        question: "6. Explique o que é interface, o que são classes abstratas e realize a diferenciação dos dois conceitos.",
+                        answer: `<ul class="list-disc list-inside space-y-2"><li><b>Interface:</b> Define um "contrato" de comportamento que classes se comprometem a seguir (relação "é capaz de"). Uma classe pode implementar várias interfaces. Elas não podem ter atributos de instância nem construtores.</li><li><b>Classe Abstrata:</b> Serve como um "modelo base" para subclasses (relação "é-um"), podendo compartilhar código (atributos e métodos concretos). Uma classe só pode herdar de uma única classe abstrata.</li><li><b>Diferença principal:</b> Use Interface para definir uma capacidade/habilidade (ex: Voavel, Taxavel). Use Classe Abstrata para criar uma base para uma família de objetos com características e comportamentos comuns (ex: Animal, Veiculo).</li></ul>`
+                    },
+                    {
+                        question: "7. Modele diferentes tipos de pagamento (Pagamento, PagamentoCartao, PagamentoBoleto) usando abstração e demonstre o polimorfismo.",
+                        answer: `<p class="mb-2">A classe abstrata <code>Pagamento</code> define o contrato, e as subclasses implementam o cálculo específico. O polimorfismo é demonstrado ao usar uma referência do tipo <code>Pagamento</code> para manipular objetos de <code>PagamentoCartao</code> e <code>PagamentoBoleto</code>.</p><div class="code-block"><pre><code>// Arquivo: Main.java (para demonstração)\npublic class Main {\n   public static void main(String[] args) {\n       double compra = 100.0;\n\n       Pagamento p1 = new PagamentoCartao(compra);\n       Pagamento p2 = new PagamentoBoleto(compra);\n\n       System.out.println("Valor no cartão: " + p1.calcularTotal());\n       System.out.println("Valor no boleto: " + p2.calcularTotal());\n   }\n}</code></pre></div>`
+                    },
+                    {
+                        question: "8. Em um sistema de biblioteca, implemente o gerenciamento de uma coleção de livros sem duplicatas, usando HashSet.",
+                        answer: `<p class="mb-2">A chave para usar <code>HashSet</code> com objetos customizados é sobrescrever corretamente os métodos <code>equals()</code> e <code>hashCode()</code> na classe <code>Livro</code>. Isso garante que o conjunto possa identificar livros duplicados com base em seus atributos, e não em suas referências de memória.</p><div class="code-block"><pre><code>// É crucial implementar equals() e hashCode() na classe Livro\n@Override\npublic boolean equals(Object o) { ... }\n\n@Override\npublic int hashCode() { ... }\n\n// Na classe Biblioteca\nprivate Set<Livro> acervo = new HashSet<>();</code></pre></div>`
+                    }
+                ]
+            }
+        };
+
+        let chartInstance = null;
+        
+        const contentEl = document.getElementById('content');
+        const navProva1 = document.getElementById('nav-prova1');
+        const navProva2 = document.getElementById('nav-prova2');
+
+        function renderTest(testId) {
+            const testData = appData[testId];
+            let mcqHtml = testData.mcq.map((q, index) => `
+                <article class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <p class="font-semibold text-lg mb-4">${q.question}</p>
+                    <div class="space-y-3" id="options-${testId}-${index}">
+                        ${q.options.map((opt, optIndex) => `
+                            <label class="block p-4 rounded-md border border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors">
+                                <input type="radio" name="q-${testId}-${index}" value="${optIndex}" class="mr-3">
+                                <span>${opt.text}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </article>
+            `).join('');
+            
+            let discursiveHtml = testData.discursive.map((q, index) => `
+                 <article class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <p class="font-semibold text-lg mb-4">${q.question}</p>
+                    <button class="reveal-button py-2 px-4 rounded-md text-sm font-semibold" data-target="answer-${testId}-${index}">Revelar Resposta</button>
+                    <div id="answer-${testId}-${index}" class="hidden mt-4 border-t border-stone-200 pt-4">${q.answer}</div>
+                </article>
+            `).join('');
+
+            contentEl.innerHTML = `
+                <section id="mcq-section">
+                    <h2 class="text-3xl font-bold text-center mb-2 text-stone-700">Questões de Múltipla Escolha</h2>
+                    <p class="text-center text-stone-500 mb-8">Selecione uma resposta para cada questão para ver a explicação.</p>
+                    ${mcqHtml}
+                </section>
+                <section id="results-section" class="text-center bg-white p-6 rounded-lg shadow-md my-8">
+                     <h2 class="text-3xl font-bold mb-2 text-stone-700">Seu Desempenho</h2>
+                     <div class="chart-container">
+                        <canvas id="results-chart"></canvas>
+                     </div>
+                     <p class="text-lg font-semibold"><span id="correct-count">0</span> de ${testData.mcq.length} corretas</p>
+                </section>
+                 <section id="discursive-section">
+                    <h2 class="text-3xl font-bold text-center mb-8 mt-12 text-stone-700">Questões Discursivas e de Código</h2>
+                    ${discursiveHtml}
+                </section>
+            `;
+            
+            updateChart(0, testData.mcq.length, 0);
+            addEventListeners(testId);
+        }
+
+        function addEventListeners(testId) {
+            const testData = appData[testId];
+            testData.mcq.forEach((q, qIndex) => {
+                const optionsContainer = document.getElementById(`options-${testId}-${qIndex}`);
+                optionsContainer.addEventListener('change', (e) => {
+                    const selectedValue = parseInt(e.target.value);
+                    
+                    const allLabels = Array.from(optionsContainer.children);
+
+                    allLabels.forEach((label, optIndex) => {
+                        label.querySelector('input').disabled = true;
+
+                        if (optIndex === q.answer) {
+                            label.classList.add('correct-answer');
+                        } else if (optIndex === selectedValue) {
+                            label.classList.add('wrong-answer');
+                        }
+
+                        if (!label.querySelector('.explanation')) {
+                            const explanationEl = document.createElement('div');
+                            explanationEl.className = 'explanation';
+                            explanationEl.innerHTML = q.options[optIndex].explanation;
+                            label.appendChild(explanationEl);
+                        }
+                    });
+
+                    updateScore(testId);
+                });
+            });
+
+            document.querySelectorAll('.reveal-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.getAttribute('data-target');
+                    const targetEl = document.getElementById(targetId);
+                    targetEl.classList.toggle('hidden');
+                    button.textContent = targetEl.classList.contains('hidden') ? 'Revelar Resposta' : 'Ocultar Resposta';
+                });
+            });
+        }
+        
+        function updateScore(testId) {
+            const testData = appData[testId];
+            let correctAnswers = 0;
+            let wrongAnswers = 0;
+
+            testData.mcq.forEach((q, qIndex) => {
+                const selectedRadio = document.querySelector(`input[name="q-${testId}-${qIndex}"]:checked`);
+                if (selectedRadio) {
+                    if (parseInt(selectedRadio.value) === q.answer) {
+                        correctAnswers++;
+                    } else {
+                        wrongAnswers++;
+                    }
+                }
+            });
+            
+            const answeredCount = correctAnswers + wrongAnswers;
+            const notAnswered = testData.mcq.length - answeredCount;
+            document.getElementById('correct-count').textContent = correctAnswers;
+            updateChart(correctAnswers, notAnswered, wrongAnswers);
+        }
+        
+        function updateChart(correct, notAnswered, wrong) {
+             const ctx = document.getElementById('results-chart').getContext('2d');
+             if(chartInstance) {
+                chartInstance.destroy();
+             }
+             chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Corretas', 'Não Respondidas', 'Incorretas'],
+                    datasets: [{
+                        data: [correct, notAnswered, wrong],
+                        backgroundColor: [
+                            '#10b981', 
+                            '#d1d5db', 
+                            '#ef4444' 
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function switchNav(activeBtn, inactiveBtn) {
+            activeBtn.classList.remove('nav-button-inactive');
+            activeBtn.classList.add('nav-button-active');
+            inactiveBtn.classList.remove('nav-button-active');
+            inactiveBtn.classList.add('nav-button-inactive');
+        }
+
+        navProva1.addEventListener('click', () => {
+            renderTest('prova1');
+            switchNav(navProva1, navProva2);
+        });
+
+        navProva2.addEventListener('click', () => {
+            renderTest('prova2');
+            switchNav(navProva2, navProva1);
+        });
+
+        renderTest('prova1');
+
+    </script>
+
+</body>
+</html>
